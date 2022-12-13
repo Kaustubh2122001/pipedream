@@ -68,6 +68,14 @@ export default {
         ...opts,
       });
     },
+    async listMembers({
+      campaign, ...opts
+    }) {
+      return this._makeRequest({
+        path: `/campaigns/${campaign}/members`,
+        ...opts,
+      });
+    },
     async listPosts({
       campaign, ...opts
     }) {

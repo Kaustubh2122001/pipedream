@@ -8,23 +8,40 @@ export default {
   version: "0.0.1",
   type: "source",
   dedupe: "unique",
+  hooks: {
+    ...base.hooks,
+    async deploy() {
+      console.log("Fetching historical events...");
+      const response = await this.patreon.listMembers({
+        campaign: this.campaign,
+        params: {
+          "page[count]": 25,
+          // "sort": "-created",
+          // "fields[tier]": "full_name",
+        },
+      });
+      for (const member of response.data) {
+        this.emitMemberEvent(member);
+      }
+    },
+  },
   methods: {
     ...base.methods,
     getTriggerType() {
       return "members:create";
     },
+    emitMemberEvent(member) {
+      this.emitEvent({
+        event: member,
+        id: member.id,
+        summary: `New member: ${member.attributes.full_name}`,
+        ts: new Date(),
+      });
+    },
   },
   async run(event) {
-    const id = event.body.data.id;
-    const member = event.body.data.attributes.full_name;
-    const ts = new Date();
-
     console.log("Emitting event...");
-
-    this.$emit(event.body, {
-      id,
-      summary: `New member: ${member}`,
-      ts,
-    });
+    const member = event.body.data;
+    this.emitMemberEvent(member);
   },
 };
